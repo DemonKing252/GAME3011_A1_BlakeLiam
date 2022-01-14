@@ -4,18 +4,42 @@ using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
 
+public enum Mode
+{
+    Extract,
+    Scan
+
+}
+
+
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] TMP_Text buttonText;
+    [SerializeField] TMP_Text modeText;
+
+    public Material scanMaterial;
+    public Material extractMaterial;
+    public Material extractNoOreMaterial;
+    public Material nonRevealedMaterial;
+    public Mode mode = Mode.Extract;
+
+    
     public TMP_Text miningUsesText;
     public TMP_Text scanUsesText;
     public TMP_Text scoreText;
 
-    private int score = 0;
-    private int scanUses = 0;
-    private int miningUses = 0;
+    [HideInInspector] public int score = 0;
+    [HideInInspector] public int scanUses = 0;
+    [HideInInspector] public int miningUses = 0;
 
     [SerializeField] private int startingMiningUses = 10; 
-    [SerializeField] private int startingScanUses = 3; 
+    [SerializeField] private int startingScanUses = 3;
+
+    public Color fullResourcesColor;
+    public Color halfResourcesColor;
+    public Color quarterResourcesColor;
+    public Color minimalResourcesColor;
+    public Color noResourcesColor;
 
     public static GameManager instance = null;
     private void Awake()
@@ -27,8 +51,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private GameObject tilePrefab;
 
-    [SerializeField]
-    private Vector2Int gridDimensions;
+    [System.NonSerialized]
+    public Vector2Int gridDimensions = new Vector2Int(32, 32);
 
     [SerializeField]
     private int maxResources;
@@ -36,9 +60,12 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private int minResources;
 
+    // Delegates for commonly used actions
     public UnityEvent onResourcesDetermined = new UnityEvent();
+    public UnityEvent onScanMode = new UnityEvent();
+    public UnityEvent onExtractMode = new UnityEvent();
 
-    private GameObject[,] grid = new GameObject[32, 32];
+    public GameObject[,] grid = new GameObject[32, 32];
 
     // Start is called before the first frame update
     void Start()
@@ -99,9 +126,28 @@ public class GameManager : MonoBehaviour
         onResourcesDetermined.Invoke();
 
     }
+    public void OnModeButtonClicked()
+    {
+        mode = (mode == Mode.Extract ? Mode.Scan : Mode.Extract);
+        if (mode == Mode.Extract)
+        {
+            buttonText.text = "Scan mode";
+            modeText.text = "Extract mode";
+            onExtractMode.Invoke();
+            onResourcesDetermined.Invoke();
+        }
+        else
+        {
+            buttonText.text = "Extract mode";
+            modeText.text = "Scan mode";
+            onScanMode.Invoke();
+        }
+
+    }
+
     public void RefreshUI()
     {
-        scoreText.text = "Score: " + score.ToString();
+        scoreText.text = "Gold: " + score.ToString();
         miningUsesText.text = "Mining Uses: " + miningUses.ToString();
         scanUsesText.text = "Scan Uses: " + scanUses.ToString(); 
     }
@@ -148,8 +194,13 @@ public class GameManager : MonoBehaviour
                                 break;
             
                             case ResourceCount.Quarter:
+                                grid[r + row, c + col].GetComponent<Tile>().resourceType = ResourceCount.Minimal;
+                                break;
+
+                            case ResourceCount.Minimal:
                                 grid[r + row, c + col].GetComponent<Tile>().resourceType = ResourceCount.None;
                                 break;
+
                         } 
                 }
             }
@@ -159,6 +210,7 @@ public class GameManager : MonoBehaviour
             RefreshUI();
 
             grid[row, col].GetComponent<Tile>().resourceType = ResourceCount.None;
+            grid[row, col].GetComponent<Tile>().extracted = true;
             onResourcesDetermined.Invoke();
         }
         catch (System.Exception e)
