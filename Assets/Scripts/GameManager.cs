@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public enum Mode
 {
@@ -14,6 +15,7 @@ public enum Mode
 
 public class GameManager : MonoBehaviour
 {
+    public bool readyToGo = false;
     [SerializeField] TMP_Text buttonText;
     [SerializeField] TMP_Text modeText;
 
@@ -64,12 +66,21 @@ public class GameManager : MonoBehaviour
     public UnityEvent onResourcesDetermined = new UnityEvent();
     public UnityEvent onScanMode = new UnityEvent();
     public UnityEvent onExtractMode = new UnityEvent();
+    public UnityEvent onRevealAllTiles = new UnityEvent();
 
     public GameObject[,] grid = new GameObject[32, 32];
+
+    [SerializeField] private GameObject startCanvas;
+    [SerializeField] private GameObject gameCanvas;
+    [SerializeField] private GameObject replayCanvas;
+
 
     // Start is called before the first frame update
     void Start()
     {
+        Time.timeScale = 0f;
+
+
         miningUses = startingMiningUses;
         scanUses = startingScanUses;
         RefreshUI();
@@ -126,6 +137,36 @@ public class GameManager : MonoBehaviour
         onResourcesDetermined.Invoke();
 
     }
+    public void OnStartGame()
+    {
+        readyToGo = true;
+        Time.timeScale = 1f;
+        startCanvas.SetActive(false);
+        gameCanvas.SetActive(true);
+    }
+    public void OnPlayAgain()
+    {
+        // Reload the scene
+        SceneManager.LoadScene("SampleScene");
+    }
+    public void OnQuit()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+    Application.Quit();
+#endif
+
+    }
+
+    public void OnGameOver()
+    {
+        onRevealAllTiles.Invoke();
+        readyToGo = false;
+        gameCanvas.SetActive(false);
+        replayCanvas.SetActive(true);
+    }
+
     public void OnModeButtonClicked()
     {
         mode = (mode == Mode.Extract ? Mode.Scan : Mode.Extract);
@@ -154,9 +195,11 @@ public class GameManager : MonoBehaviour
 
     public void ExtractResourceAt(int row, int col)
     {
-        if (miningUses > 0)
-            miningUses--;
-        else return;
+        miningUses--;
+
+        if (miningUses <= 0)
+            OnGameOver();
+
 
         try
         {

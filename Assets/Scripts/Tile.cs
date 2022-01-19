@@ -22,7 +22,9 @@ public class Tile : MonoBehaviour
 
     void OnMouseDown()
     {
-        
+        if (!GameManager.instance.readyToGo)
+            return;
+
         if (GameManager.instance.mode == Mode.Scan)
         {
             if (GameManager.instance.scanUses > 0)
@@ -30,8 +32,7 @@ public class Tile : MonoBehaviour
                 GameManager.instance.scanUses--;
                 GameManager.instance.RefreshUI();
             }
-            else
-                return;
+            else return;
 
             for (int r = -1; r <= 1; r++)
             {
@@ -56,7 +57,14 @@ public class Tile : MonoBehaviour
         GameManager.instance.onResourcesDetermined.AddListener(OnResourcesChanged);    
         GameManager.instance.onExtractMode.AddListener(OnExtractMode);    
         GameManager.instance.onScanMode.AddListener(OnScanMode);    
+        GameManager.instance.onRevealAllTiles.AddListener(OnRevealTile);    
     }
+    public void OnRevealTile()
+    {
+        scanRevealed = true;
+        OnResourcesChanged();
+    }
+
     public void OnResourcesChanged()
     {
         //Debug.Log("This should be getting called!!");
