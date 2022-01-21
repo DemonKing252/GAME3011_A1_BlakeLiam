@@ -40,8 +40,11 @@ public class Tile : MonoBehaviour
                 {
                     if (r+row < 0 || r+row > GameManager.instance.gridDimensions.y - 1 || c+col < 0 || c+col > GameManager.instance.gridDimensions.x - 1)
                         continue;
-                    
-                      GameManager.instance.grid[r + row, c + col].GetComponent<Tile>().scanRevealed = true;
+
+
+                    GameManager.instance.gameStat.text = string.Format("Scanned a tile at (x: {0}, y: {1})", col, row);
+
+                    GameManager.instance.grid[r + row, c + col].GetComponent<Tile>().scanRevealed = true;
                 }
             }
             GameManager.instance.onResourcesDetermined.Invoke();

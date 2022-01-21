@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     public TMP_Text miningUsesText;
     public TMP_Text scanUsesText;
     public TMP_Text scoreText;
+    public TMP_Text gameOverText;
 
     [HideInInspector] public int score = 0;
     [HideInInspector] public int scanUses = 0;
@@ -62,6 +63,9 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private int minResources;
 
+    [SerializeField]
+    public TMP_Text gameStat;
+
     // Delegates for commonly used actions
     public UnityEvent onResourcesDetermined = new UnityEvent();
     public UnityEvent onScanMode = new UnityEvent();
@@ -80,6 +84,7 @@ public class GameManager : MonoBehaviour
     {
         Time.timeScale = 0f;
 
+        gameStat.text = "";
 
         miningUses = startingMiningUses;
         scanUses = startingScanUses;
@@ -161,6 +166,7 @@ public class GameManager : MonoBehaviour
 
     public void OnGameOver()
     {
+        gameOverText.text = "Game Over! All tiles have been revealed. Your score is: " + score.ToString();
         onRevealAllTiles.Invoke();
         readyToGo = false;
         gameCanvas.SetActive(false);
@@ -206,16 +212,24 @@ public class GameManager : MonoBehaviour
             switch (grid[row, col].GetComponent<Tile>().resourceType)
             {
                 case ResourceCount.Full:
+
+                    GameManager.instance.gameStat.text = string.Format("Extracted {0} gold at tile -> (x: {1}, y: {2})", 40, col, row);
                     score += 40;
                     break;
                 case ResourceCount.Half:
+                    GameManager.instance.gameStat.text = string.Format("Extracted {0} gold at tile -> (x: {1}, y: {2})", 20, col, row);
                     score += 20;
                     break;
                 case ResourceCount.Quarter:
+                    GameManager.instance.gameStat.text = string.Format("Extracted {0} gold at tile -> (x: {1}, y: {2})", 10, col, row);
                     score += 10;
                     break;
                 case ResourceCount.Minimal:
+                    GameManager.instance.gameStat.text = string.Format("Extracted {0} gold at tile -> (x: {1}, y: {2})", 5, col, row);
                     score += 5;
+                    break;
+                case ResourceCount.None:
+                    GameManager.instance.gameStat.text = string.Format("Extracted {0} gold at tile -> (x: {1}, y: {2})", 0, col, row);
                     break;
 
             }
